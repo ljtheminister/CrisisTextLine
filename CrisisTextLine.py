@@ -92,24 +92,28 @@ plt.show()
 
 # Texter Rating
 rating_visitor_grp = data.groupby(['Q36_visitor_feeling'])
-results = ['Better', 'Same', 'Worse']
+results = ['Much Better', 'Improved', 'Worsened', 'Remained the same']
+results = ['Remained the same', 'Worsened', 'Improved', 'Significantly better']
 
-plt.figure()
+#plt.figure()
 for key, group in rating_visitor_grp:
     plt.figure()
     group['conv_time'].hist(bins=bins, label=str(key))
     plt.xlabel('Length of conversation (minutes)')
     plt.ylabel('Frequency')
-    plt.title(key + ' (n=' + str(len(group)) +')')
-    print key
+    print key, len(group)
+    plt.title(results.pop() + ' (n=' + str(len(group)) +')')
+    '''
     print 'mean: ', group['conv_time'].mean()
     print 'median: ', group['conv_time'].median()
+    '''
 
 plt.title('Overlayed Histogram of Texter Ratings vs. Conversation Length')
 plt.legend(loc = 'upper right')
 plt.show()
 
 
+pd.crosstab(data.conv_rating, data.Q36_visitor_feeling, margins=True)
 
 
 
@@ -164,20 +168,33 @@ not_first_data = data.ix[not_first]
 first_time_data.to_csv('first_time.csv', index=False)
 not_first_data.to_csv('not_first_time.csv', index=False)
 
-first_time_resolutions = defaultdict(int)
-non_first_time_resolutions = defaultdict(int)
-
-for row in first_time_data:
-    try:
-        resolutions = row['Q8_conv_resolution'].split(',')
-        for resolution in resolutions:
-            [resolution] += 1
-    except:
-        pass
-    
 
 
+def count_item(data, column_name, delimiter=','):
+    counts = defaultdict(int) 
+    for i, row in data.iterrows():
+        try:
+            items = row[column_name].split(delimiter)
+            for item in items:
+                counts[item] += 1
+        except:
+            pass
+    return counts
 
+first_time_resolutions = count_item(first_time_data, 'Q8_conv_resolution')
+not_first_time_resolutions = count_item(not_first_data, 'Q8_conv_resolution')
+
+
+def write_dict_to_csv(dictionary, filename):
+    with open(filename + '.csv', 'wb') as f:
+        csvwriter = csv.writer(f, delimiter=',')
+        for key, value in dictionary.iteritems():
+            csvwriter.writerow([key, value])
+
+
+
+write_dict_to_csv(first_time_resolutions, 'first_time_resolutions')
+write_dict_to_csv(not_first_time_resolutions, 'not_first_time_resolutions')
 
 
 
